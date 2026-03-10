@@ -5,7 +5,7 @@
   
   **منصة متكاملة لإنشاء تطبيقات Full-Stack بضغطة زر واحدة**
   
-  [Demo](https://aicodecer.online) · [Report Bug](https://github.com/ai-code-creator/issues) · [Request Feature](https://github.com/ai-code-creator/issues)
+  [Demo](https://aicodecer.online) · [GitHub](https://github.com/yayass3r/ai-code-creator)
 </div>
 
 ---
@@ -60,13 +60,16 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/ai-code-creator/ai-code-creator.git
+git clone https://github.com/yayass3r/ai-code-creator.git
 
 # Navigate to the directory
 cd ai-code-creator
 
 # Install dependencies
 bun install
+
+# Create .env.local file with your API keys
+cp .env.example .env.local
 
 # Run development server
 bun run dev
@@ -137,6 +140,19 @@ src/
 
 ## 🚀 النشر
 
+### Docker Compose (Recommended)
+
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop
+docker-compose down
+```
+
 ### Docker
 
 ```bash
@@ -144,15 +160,27 @@ src/
 docker build -t ai-code-creator .
 
 # Run container
-docker run -p 3000:3000 ai-code-creator
+docker run -p 3000:3000 --env-file .env.local ai-code-creator
 ```
 
 ### Northflank
 
-1. اذهب إلى تبويب **Deploy**
-2. اضغط **Deploy to Production**
-3. انتظر حتى يكتمل النشر
-4. ستحصل على رابط مباشر للمشروع
+1. **Connect Repository**: اربط مستودع GitHub
+2. **Create Service**: أنشئ خدمة جديدة
+3. **Configure Build**: استخدم Dockerfile
+4. **Add Environment Variables**: أضف متغيرات البيئة
+5. **Deploy**: انشر المشروع
+6. **Custom Domain**: اربط الدومين aicodecer.online
+
+### Vercel
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel --prod
+```
 
 ---
 
