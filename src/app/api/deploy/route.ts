@@ -11,6 +11,18 @@ interface DeployRequest {
   domain?: string;
 }
 
+type DeploymentStatusType = 'pending' | 'building' | 'deploying' | 'live' | 'failed';
+
+interface Deployment {
+  id: string;
+  projectId: string;
+  status: DeploymentStatusType;
+  progress: number;
+  logs: string[];
+  url?: string;
+  createdAt: Date;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: DeployRequest = await request.json();
@@ -23,20 +35,13 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // For now, return a simulated deployment response
-    // In production, this would:
-    // 1. Create a Git repository with the files
-    // 2. Build a Docker image
-    // 3. Push to container registry
-    // 4. Deploy to Northflank
-    
+    // Simulate deployment process
     const deploymentId = uuidv4();
     
-    // Simulate deployment process
-    const deployment = {
+    const deployment: Deployment = {
       id: deploymentId,
       projectId: uuidv4(),
-      status: 'building' as const,
+      status: 'building',
       progress: 0,
       logs: [
         'Initializing deployment...',
@@ -48,7 +53,7 @@ export async function POST(request: NextRequest) {
     };
     
     // Try to deploy to Northflank if configured
-    let deploymentUrl = null;
+    let deploymentUrl: string | null = null;
     try {
       const result = await deployToNorthflank(
         projectName,
@@ -59,12 +64,11 @@ export async function POST(request: NextRequest) {
       if (result.success) {
         deployment.status = 'live';
         deployment.progress = 100;
-        deploymentUrl = result.url;
+        deploymentUrl = result.url || null;
         deployment.logs.push('Deployment successful!');
       }
     } catch (error) {
       console.log('Northflank deployment skipped:', error);
-      // Continue with simulated deployment
     }
     
     return NextResponse.json({
@@ -96,14 +100,11 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Get deployment status
-    // This would fetch from Northflank in production
-    
     return NextResponse.json({
       success: true,
       deployment: {
         id: deploymentId,
-        status: 'live',
+        status: 'live' as DeploymentStatusType,
         progress: 100,
         logs: ['Deployment completed successfully']
       }

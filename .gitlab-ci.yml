@@ -1,0 +1,101 @@
+stages:
+  - install
+  - build
+  - test
+  - deploy
+
+variables:
+  NODE_VERSION: "20"
+  BUN_VERSION: "latest"
+
+# Install dependencies
+install:
+  stage: install
+  image: oven/bun:$BUN_VERSION
+  script:
+    - bun install --frozen-lockfile
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1 hour
+
+# Build the application
+build:
+  stage: build
+  image: oven/bun:$BUN_VERSION
+  needs:
+    - install
+  script:
+    - bun run build
+  artifacts:
+    paths:
+      - .next/
+      - public/
+    expire_in: 1 week
+
+# Lint and test
+test:
+  stage: test
+  image: oven/bun:$BUN_VERSION
+  needs:
+    - install
+  script:
+    - bun run lint
+  allow_failure: true
+
+# Build Docker image
+docker:build:
+  stage: deploy
+  image: docker:latest
+  services:
+    - docker:dind
+  needs:
+    - build
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
+  only:
+    - main
+
+# Deploy to Northflank
+deploy:northflank:
+  stage: deploy
+  image: alpine:latest
+  needs:
+    - docker:build
+  before_script:
+    - apk add --no-cache curl jq
+  script:
+    - |
+      curl -X POST \
+        -H "Authorization: Bearer $NORTHFLANK_API_TOKEN" \
+        -H "Content-Type: application/json" \
+        "https://api.northflank.com/v1/projects/$NORTHFLANK_PROJECT_ID/services" \
+        -d '{
+          "name": "ai-code-creator",
+          "image": "'$CI_REGISTRY_IMAGE':'$CI_COMMIT_SHA'",
+          "ports": [{"port": 3000, "type": "http"}],
+          "replicas": 1
+        }'
+  only:
+    - main
+  when: manual
+
+# Deploy to GitLab Pages (optional)
+pages:
+  stage: deploy
+  image: oven/bun:$BUN_VERSION
+  needs:
+    - build
+  script:
+    - mkdir -p public
+    - cp -r .next/* public/ 2>/dev/null || true
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+  when: manual

@@ -1,0 +1,55 @@
+{
+  "name": "ai-code-creator",
+  "description": "AI-powered Full-Stack Application Generator",
+  "apiVersion": "v1.2",
+  "spec": {
+    "ref": "project",
+    "kind": "Project",
+    "spec": {
+      "name": "ai-code-creator",
+      "color": "#57637A",
+      "networking": {
+        "allowedIngressProjects": [],
+        "hostAliases": {
+          "enabled": false
+        }
+      },
+      "region": "europe-west"
+    }
+  },
+  "services": [
+    {
+      "name": "ai-code-creator-web",
+      "kind": "Service",
+      "spec": {
+        "type": "dockerfile",
+        "dockerfile": {
+          "path": "Dockerfile",
+          "buildContext": "."
+        },
+        "ports": [
+          {
+            "id": "http",
+            "type": "http",
+            "port": 3000,
+            "name": "HTTP"
+          }
+        ],
+        "replicas": 1,
+        "resources": {
+          "cpu": "0.5",
+          "memory": "512Mi"
+        },
+        "env": {
+          "NODE_ENV": "production"
+        },
+        "domains": [
+          {
+            "domain": "aicodecer.online",
+            "port": "http"
+          }
+        ]
+      }
+    }
+  ]
+}
